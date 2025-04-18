@@ -1,3 +1,68 @@
+# @app.route("/")
+# def home():
+#     return render_template("index.html", puzzle=None, solution=None)
+
+# # Generate puzzle
+# @app.route("/api/generate", methods=["GET"])
+# def generate_puzzle():
+#     full_board = generate_full_board()
+#     puzzle = remove_cells(full_board, level="easy")  # Change level later
+#     return jsonify({"puzzle": puzzle})
+
+# # Solve puzzle
+# @app.route("/api/solve", methods=["POST"])
+# def solve_puzzle():
+#     puzzle = request.json.get("puzzle")
+#     if puzzle:
+#         solved_board = copy.deepcopy(puzzle)
+#         solve_board(solved_board)
+#         return jsonify({"solution": solved_board})
+#     return jsonify({"error": "No puzzle provided"}), 400
+
+# # Visualize solving process
+# @app.route("/api/visualize", methods=["POST"])
+# def visualize_solving():
+#     puzzle = request.json.get("puzzle")
+#     if puzzle:
+#         steps = []  # List to store intermediate steps
+#         puzzle_copy = copy.deepcopy(puzzle)
+        
+#         def record_step():
+#             steps.append([row[:] for row in puzzle_copy])  # Make a snapshot of the current state
+        
+#         # Modified solve_board to record steps
+#         def solve_with_steps(board):
+#             for row in range(9):
+#                 for col in range(9):
+#                     if board[row][col] == 0:
+#                         for num in range(1, 10):
+#                             if is_valid(board, row, col, num):
+#                                 board[row][col] = num
+#                                 record_step()
+#                                 if solve_with_steps(board):
+#                                     return True
+#                                 board[row][col] = 0
+#                         return False
+#             return True
+
+#         solve_with_steps(puzzle_copy)
+#         return jsonify({"visualization": steps})
+    
+#     return jsonify({"error": "No puzzle provided"}), 400
+
+# def solve_board(board):
+#     for row in range(9):
+#         for col in range(9):
+#             if board[row][col] == 0:
+#                 for num in range(1, 10):
+#                     if is_valid(board, row, col, num):
+#                         board[row][col] = num
+#                         if solve_board(board):
+#                             return True
+#                         board[row][col] = 0
+#                 return False
+#     return True
+
 from flask import Flask, render_template, jsonify, request
 from flask_cors import CORS
 import copy
@@ -19,19 +84,14 @@ def is_valid(board, row, col, num):
                 return False
     return True
 
-def solve_board(board, visualize_callback=None):
+def solve_board(board):
     for row in range(9):
         for col in range(9):
             if board[row][col] == 0:
                 for num in range(1, 10):
                     if is_valid(board, row, col, num):
                         board[row][col] = num
-                        
-                        # If a callback is provided, invoke it with the current board state
-                        if visualize_callback:
-                            visualize_callback(board)
-                        
-                        if solve_board(board, visualize_callback):
+                        if solve_board(board):
                             return True
                         board[row][col] = 0
                 return False
@@ -86,7 +146,6 @@ def visualize():
 
     steps = []
 
-    # This will store each snapshot of the board during solving
     def visualize_callback(grid_snapshot):
         steps.append(copy.deepcopy(grid_snapshot))
 
